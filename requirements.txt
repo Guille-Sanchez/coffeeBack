@@ -1,3 +1,4 @@
 djangorestframework
 psycopg
 pillow
+django-cors-headers

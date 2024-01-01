@@ -1,6 +1,7 @@
 # views.py
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
+from rest_framework.response import Response
 from .models import Cafeteria, FoodJournalEntry
 from .serializers import CafeteriaSerializer, FoodJournalEntrySerializer
 
@@ -8,17 +9,25 @@ class CafeteriaViewset(viewsets.ModelViewSet):
     queryset = Cafeteria.objects.all()
     serializer_class = CafeteriaSerializer
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        cafeteria_name = self.request.query_params.get('name', None)
+    def list(self, request, *args, **kwargs):
+        cafeteria_name = request.query_params.get('name', None)
 
+        if cafeteria_name:
+            queryset = self.get_queryset()
+            serializer = FoodJournalEntrySerializer(queryset, many=True, context={'request': request})
+            return Response(serializer.data)
+
+        queryset = self.get_queryset()
+        serializer = CafeteriaSerializer(queryset, many=True, context={'request': request})
+        result = {item['name']: item for item in serializer.data}
+        for cafe in result.values():
+            del cafe['name']
+        return Response(result)
+
+
+    def get_queryset(self):
+        cafeteria_name = self.request.query_params.get('name', None)
         if cafeteria_name:
             cafeteria = get_object_or_404(Cafeteria, name=cafeteria_name)
             return FoodJournalEntry.objects.filter(cafeteria=cafeteria)
-
-        return queryset
-
-    def get_serializer_class(self):
-        if 'name' in self.request.query_params:
-            return FoodJournalEntrySerializer
-        return super().get_serializer_class()
+        return super().get_queryset()
