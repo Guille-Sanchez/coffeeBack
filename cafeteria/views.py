@@ -13,11 +13,11 @@ class CafeteriaViewset(viewsets.ModelViewSet):
         cafeteria_name = request.query_params.get('name', None)
 
         if cafeteria_name:
-            queryset = self.get_queryset()
+            queryset = self.get_queryset().order_by('id')
             serializer = FoodJournalEntrySerializer(queryset, many=True, context={'request': request})
             return Response(serializer.data)
 
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().order_by('id')
         serializer = CafeteriaSerializer(queryset, many=True, context={'request': request})
         result = {item['name']: item for item in serializer.data}
         for cafe in result.values():
