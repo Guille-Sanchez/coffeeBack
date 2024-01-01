@@ -32,51 +32,28 @@ class Cafeteria(models.Model):
         else:
             self._current_image_path = None
 
-
 @receiver(pre_save, sender=Cafeteria)
-def set_old_image_path(sender, instance, **kwargs):
-    if instance.pk:
-        try:
-            old_instance = sender.objects.get(pk=instance.pk)
-            instance._current_image_path = old_instance.cafeteria_image.path
-        except sender.DoesNotExist:
-            pass
-
-@receiver(post_save, sender=Cafeteria)
-def delete_old_images(sender, instance, **kwargs):
-    # Handle cafeteria_image
-    if hasattr(instance, '_old_cafeteria_image_path'):
-        new_cafeteria_image_path = instance.cafeteria_image.path if instance.cafeteria_image else None
-        if instance._old_cafeteria_image_path != new_cafeteria_image_path:
-            delete_old_file(instance._old_cafeteria_image_path)
-
-    # Handle menu image
-    if hasattr(instance, '_old_menu_image_path'):
-        new_menu_image_path = instance.menu.path if instance.menu else None
-        if instance._old_menu_image_path != new_menu_image_path:
-            delete_old_file(instance._old_menu_image_path)
-
-
-@receiver(pre_save, sender=Cafeteria)
-def set_old_image_path_cafeteria(sender, instance, **kwargs):
+def set_old_image_paths(sender, instance, **kwargs):
     if instance.pk:
         try:
             old_instance = sender.objects.get(pk=instance.pk)
             instance._old_cafeteria_image_path = old_instance.cafeteria_image.path if old_instance.cafeteria_image else None
             instance._old_menu_image_path = old_instance.menu.path if old_instance.menu else None
         except sender.DoesNotExist:
-            pass
+            instance._old_cafeteria_image_path = None
+            instance._old_menu_image_path = None
 
 @receiver(post_save, sender=Cafeteria)
-def delete_old_image_cafeteria(sender, instance, **kwargs):
+def delete_old_images(sender, instance, **kwargs):
     if hasattr(instance, '_old_cafeteria_image_path'):
-        new_image_path = instance.cafeteria_image.path if instance.cafeteria_image else None
-        delete_old_file(instance._old_cafeteria_image_path) if instance._old_cafeteria_image_path != new_image_path else None
+        new_cafeteria_image_path = instance.cafeteria_image.path if instance.cafeteria_image else None
+        if instance._old_cafeteria_image_path != new_cafeteria_image_path:
+            delete_old_file(instance._old_cafeteria_image_path)
     
     if hasattr(instance, '_old_menu_image_path'):
-        new_menu_path = instance.menu.path if instance.menu else None
-        delete_old_file(instance._old_menu_image_path) if instance._old_menu_image_path != new_menu_path else None
-
+        new_menu_image_path = instance.menu.path if instance.menu else None
+        if instance._old_menu_image_path != new_menu_image_path:
+            delete_old_file(instance._old_menu_image_path)
     
 class FoodJournalEntry(models.Model):
     cafeteria = models.ForeignKey(Cafeteria, on_delete=models.CASCADE)
